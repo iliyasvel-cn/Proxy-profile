@@ -1,11 +1,42 @@
+# HTTP(S)代理服务监听端口
 port: 7890
+
+# SOCKS5代理服务监听端口
 socks-port: 7891
-allow-lan: true
+
+# HTTP(S)，SOCKS4(A)/SOCKS5代理服务共同监听端口
+# mixed-port: 7890
+
+# 本地SOCKS5/HTTP(S)服务认证用户名密码设置
+# authentication:
+#  - "用户名1:密码1"
+#  - "用户名2:密码2"
+
+# 局域网共享
+# allow-lan: false
+
+# Clash的出站模式{有rule（按规则分流翻墙模式）global（全局翻墙模式）direct（直接连接不翻墙模式）}
 mode: rule
-log-level: info
-ipv6: false
-external-controller: 127.0.0.1:9090
-secret: ''
+
+# 日志记录
+# log-level: info
+
+# IPV6网络使用
+# ipv6: false
+
+# 网络远程控制监听端口
+external-controller: '0.0.0.0:9090'
+
+# 控制模板的本地路径
+# external-ui: folder
+
+# 远程访问控制的密码
+# secret: '123456789'
+
+# 出站流量所用的网卡
+# interface-name: en0
+
+#自定义HOST
 hosts:
     '*.origin.com': '104.109.129.224'
     'cloudsync-prod.s3.amazonaws.com': '104.109.129.224'
@@ -19,74 +50,257 @@ hosts:
     'us.cdn.blizzard.com': '137.221.64.5'
     'eu.cdn.blizzard.com': '137.221.64.5'
 
-dns:
-  enable: true
-  enhanced-mode: fake-ip
-  nameserver:
-    - 114.114.114.114
-    - 223.5.5.5
-    - 8.8.8.8
-  fallback: []
-  fake-ip-filter:
-    - dns.msftncsi.com
-    - www.msftncsi.com
-    - www.msftconnecttest.com
+# dns:
+#   enable: false # false为不自建本地DNS解析，true为自建DNS解析
+#   listen: 0.0.0.0:53  # DNS监听本地53端口
+#   ipv6: false # ipv6设置为false（无法访问IPV6的网站），true（可以访问IPV6网站）
 
-tun:
-  enable: true
-  stack: gvisor
-  auto-detect-interface: true
-  auto-route: true
-  dns-hijack:
-    - 198.18.0.2:53
+#   nameserver:
+#    - 114.114.114.114 # 普通公共DNS解析服务地址
+#    - tls://dns.rubyfish.cn:853 # 公共DOT解析服务地址
+#    - https://1.1.1.1/dns-query # 公共DOH解析服务地址
 
-nameserver-policy:
-    '*.origin.com': '104.109.129.224'
-    'cloudsync-prod.s3.amazonaws.com': '104.109.129.224'
-    'origin-a.akamaihd.net': '104.109.129.224'
-    'ssl-lvlt.cdn.ea.com': '8.252.18.252'
-    'blzddist1-a.akamaihd.net': '175.45.42.210'
-    'blzddistkr1-a.akamaihd.net': '175.45.42.210'
-    'bnetproduct-a.akamaihd.net': '175.45.42.210'
-    'level3.blizzard.com': '8.250.167.254'
-    'kr.cdn.blizzard.com': '137.221.64.5'
-    'us.cdn.blizzard.com': '137.221.64.5'
-    'eu.cdn.blizzard.com': '137.221.64.5'
-    
+# nameserver-policy:  #指定域名使用指定的DNS解析服务
+#   'www.baidu.com': '114.114.114.114'
+#   '+.internal.crop.com': '10.0.0.1'
+
 proxies:
+  # Wireguard
+  - name: "wg"
+    type: wireguard
+    server: 127.0.0.1
+    port: 443
+    ip: 172.16.0.2
+    # ipv6: your_ipv6
+    private-key: eCtXsJZ27+4PbhDkHnB923tkUn2Gj59wZw5wFA75MnU=
+    public-key: Cr8hWlKvtDt7nrvf+f0brNQQzabAqrjfBvas9pmowjo=
+    # preshared-key: base64
+    # remote-dns-resolve: true # remote resolve DNS with `dns` field, default is true
+    # dns: [1.1.1.1, 8.8.8.8]
+    # mtu: 1420
+    udp: true
+
+  # SS
+  - name: "自己设置名字"
+    type: ss
+    server: 填你的服务器IP地址
+    port: 443
+    cipher: chacha20-ietf-poly1305
+    password: "password"
+    # udp: true
+
+  - name: "自己设置名字"
+    type: ss
+    server: 填你的服务器IP地址
+    port: 443
+    cipher: chacha20-ietf-poly1305
+    password: "password"
+    plugin: obfs
+    plugin-opts:
+      mode: tls # or http
+      # host: bing.com
+
+  - name: "自己设置名字"
+    type: ss
+    server: 填你的服务器IP地址
+    port: 443
+    cipher: chacha20-ietf-poly1305
+    password: "password"
+    plugin: v2ray-plugin
+    plugin-opts:
+      mode: websocket # no QUIC now
+      # tls: true # wss
+      # skip-cert-verify: true
+      # host: bing.com
+      # path: "/"
+      # mux: true
+      # headers:
+      #   custom: value
+
+  # vmess
+  - name: "自己设置名字"
+    type: vmess
+    server: 填你的服务器IP地址
+    port: 443
+    uuid: uuid
+    alterId: 32
+    cipher: auto
+    # udp: true
+    # tls: true
+    # skip-cert-verify: true
+    # servername: example.com # priority over wss host
+    # network: ws
+    # ws-opts:
+    #   path: /path
+    #   headers:
+    #     Host: v2ray.com
+    #   max-early-data: 2048
+    #   early-data-header-name: Sec-WebSocket-Protocol
+
+  - name: "自己设置名字"
+    type: vmess
+    server: 填你的服务器IP地址
+    port: 443
+    uuid: uuid
+    alterId: 32
+    cipher: auto
+    network: h2
+    tls: true
+    h2-opts:
+      host:
+        - http.example.com
+        - http-alt.example.com
+      path: /
+  
+  - name: "自己设置名字"
+    type: vmess
+    server: 填你的服务器IP地址
+    port: 443
+    uuid: uuid
+    alterId: 32
+    cipher: auto
+    # udp: true
+    # network: http
+    # http-opts:
+    #   # method: "GET"
+    #   # path:
+    #   #   - '/'
+    #   #   - '/video'
+    #   # headers:
+    #   #   Connection:
+    #   #     - keep-alive
+
+  - name: "自己设置名字"
+    server: 填你的服务器IP地址
+    port: 443
+    type: vmess
+    uuid: uuid
+    alterId: 32
+    cipher: auto
+    network: grpc
+    tls: true
+    servername: example.com
+    # skip-cert-verify: true
+    grpc-opts:
+      grpc-service-name: "example"
+
+  # socks5
+  - name: "自己设置名字"
+    type: socks5
+    server: 填你的服务器IP地址
+    port: 443
+    # username: username
+    # password: password
+    # tls: true
+    # skip-cert-verify: true
+    # udp: true
+
+  # http
+  - name: "自己设置名字"
+    type: http
+    server: 填你的服务器IP地址
+    port: 443
+    # username: username
+    # password: password
+    # tls: true # https
+    # skip-cert-verify: true
+    # sni: custom.com
+
+  # Snell
+  - name: "自己设置名字"
+    type: snell
+    server: 填你的服务器IP地址
+    port: 44046
+    psk: yourpsk
+    # version: 2
+    # obfs-opts:
+      # mode: http # or tls
+      # host: bing.com
+
+  # Trojan
+  - name: "自己设置名字"
+    type: trojan
+    server: 填你的服务器IP地址
+    port: 443
+    password: yourpsk
+    # udp: true
+    # sni: example.com # aka server name
+    # alpn:
+    #   - h2
+    #   - http/1.1
+    # skip-cert-verify: true
+
+  - name: "自己设置名字"
+    server: 填你的服务器IP地址
+    port: 443
+    type: trojan
+    password: "example"
+    network: grpc
+    sni: example.com
+    # skip-cert-verify: true
+    udp: true
+    grpc-opts:
+      grpc-service-name: "example"
+
+  - name: "自己设置名字"
+    server: 填你的服务器IP地址
+    port: 443
+    type: trojan
+    password: "example"
+    network: ws
+    sni: example.com
+    # skip-cert-verify: true
+    udp: true
+    # ws-opts:
+      # path: /path
+      # headers:
+      #   Host: example.com
+
+  # ShadowsocksR
+  - name: "自己设置名字"
+    type: ssr
+    server: 填你的服务器IP地址
+    port: 443
+    cipher: chacha20-ietf
+    password: "password"
+    obfs: tls1.2_ticket_auth
+    protocol: auth_sha1_v4
+    # obfs-param: domain.tld
+    # protocol-param: "#"
+    # udp: true
 
 proxy-groups:
+  # 代理链功能（也就是客户端实现的自定义中转#不支持UDP）: 本地客户端<-> http <-> vmess <-> ss1 <-> ss2 <->你最终访问的网页
+  - name: "relay"
+    type: relay
+    proxies:
+      - http
+      - vmess
+      - ss1
+      - ss2
+
   - name: "自行选择"
     type: select
     use:
-      - Snell
+      - proxy
     proxies:
       - DIRECT
       - REJECT
 
+# 外部加载订阅节点信息，这样就使用自己专用的分流规则，节点用机场的
 proxy-providers:
-  Snell:
+  proxy:
     type: http
-    url: "https://gitee.com/ylrc-mengxin/test/raw/master/a/dl1.yaml"
+    url: "机场提供的节点的订阅链接"
     interval: 3600
-    path: ./dl1.yaml
+    path: ./proxy.yaml
     health-check:
       enable: true
       interval: 600
       # lazy: true
       url: http://www.gstatic.com/generate_204
 
- #Providers2:
-   #type: http
-   #url: "https://gitee.com/ylrc-mengxin/test/raw/master/a/http.yaml"
-   #interval: 3600
-   #path: ./http.yaml
-   #health-check:
-     #enable: true
-     #interval: 600
-      # lazy: true
-     #url: http://www.gstatic.com/generate_204
-      
+# 外部加载规则集
 rule-providers:
   Advertising:
     behavior: classical
@@ -105,7 +319,7 @@ rule-providers:
 rules:
   - DOMAIN,clash.razord.top,DIRECT
   - DOMAIN,yacd.haishan.me,DIRECT
-  - RULE-SET,Global,自行选择
   - RULE-SET,Advertising,REJECT
+  - RULE-SET,Global,自行选择
   - GEOIP,CN,DIRECT
   - MATCH,自行选择
